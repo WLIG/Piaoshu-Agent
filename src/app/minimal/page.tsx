@@ -1,3 +1,8 @@
+'use client';
+
+// 禁用静态生成
+export const dynamic = 'force-dynamic';
+
 export default function MinimalPage() {
   return (
     <div style={{ 
