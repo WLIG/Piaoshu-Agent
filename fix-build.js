@@ -1,4 +1,125 @@
-import React from 'react';
+const fs = require('fs');
+const path = require('path');
+
+console.log('🔧 开始修复构建问题...\n');
+
+// 1. 修复 tsconfig.json
+console.log('1. 修复 tsconfig.json...');
+const tsconfig = {
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["dom", "dom.iterable", "es6"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+};
+
+fs.writeFileSync('tsconfig.json', JSON.stringify(tsconfig, null, 2));
+console.log('✅ tsconfig.json 已修复');
+
+// 2. 修复 next-env.d.ts
+console.log('2. 修复 next-env.d.ts...');
+const nextEnvContent = `/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// Global type declarations
+declare global {
+  var fetch: typeof globalThis.fetch;
+  var JSON: typeof globalThis.JSON;
+  var String: typeof globalThis.String;
+  var Math: typeof globalThis.Math;
+  var Date: typeof globalThis.Date;
+  var setTimeout: typeof globalThis.setTimeout;
+  var clearTimeout: typeof globalThis.clearTimeout;
+}
+
+export {};
+`;
+
+fs.writeFileSync('next-env.d.ts', nextEnvContent);
+console.log('✅ next-env.d.ts 已修复');
+
+// 3. 修复 test-api 页面
+console.log('3. 修复 test-api 页面...');
+const testApiContent = `'use client';
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+
+export default function TestApiPage() {
+  const [result, setResult] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const testApi = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/test-llm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Hello, this is a test' })
+      });
+      const data = await response.json();
+      setResult(JSON.stringify(data, null, 2));
+    } catch (error: any) {
+      setResult('Error: ' + (error?.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>API 测试页面</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button onClick={testApi} disabled={loading}>
+            {loading ? '测试中...' : '测试 API'}
+          </Button>
+          
+          {result && (
+            <div>
+              <Badge variant="outline">结果</Badge>
+              <pre className="mt-2 p-4 bg-gray-100 rounded text-sm overflow-auto">
+                {result}
+              </pre>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}`;
+
+fs.writeFileSync('src/app/test-api/page.tsx', testApiContent);
+console.log('✅ test-api 页面已修复');
+
+// 4. 修复主页面
+console.log('4. 修复主页面...');
+const homePageContent = `import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -152,4 +273,12 @@ export default function HomePage() {
       </div>
     </div>
   );
-}
+}`;
+
+fs.writeFileSync('src/app/page.tsx', homePageContent);
+console.log('✅ 主页面已修复');
+
+console.log('\n🎉 构建问题修复完成！');
+console.log('\n接下来可以尝试运行：');
+console.log('- yarn build (如果yarn安装完成)');
+console.log('- 或者等待依赖安装完成后再构建');
