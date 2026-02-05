@@ -1,5 +1,8 @@
 'use client';
 
+// 禁用静态生成
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
