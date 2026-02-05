@@ -88,9 +88,14 @@ export default function HomePage() {
                     简化版体验
                   </Button>
                 </Link>
-                <Link href="/chat-test">
+                <Link href="/complete">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto">
                     完整版体验
+                  </Button>
+                </Link>
+                <Link href="/chat-test">
+                  <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                    测试版体验
                   </Button>
                 </Link>
               </div>
