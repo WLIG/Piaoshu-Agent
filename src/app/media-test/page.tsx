@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 
+// 禁用静态生成
+export const dynamic = 'force-dynamic';
+
 interface UploadedFile {
   id: string;
   file: File;

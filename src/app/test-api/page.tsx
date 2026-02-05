@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
+// 禁用静态生成
+export const dynamic = 'force-dynamic';
+
 export default function TestApiPage() {
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -20,7 +23,7 @@ export default function TestApiPage() {
       const data = await response.json();
       setResult(JSON.stringify(data, null, 2));
     } catch (error: any) {
-      setResult('Error: ' + (error?.message || 'Unknown error'));
+      setResult('Error: ' + (error?.message || error?.toString() || 'Unknown error'));
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,9 @@
 
 import { ChatInterface } from '@/components/ChatInterface';
 
+// 禁用静态生成
+export const dynamic = 'force-dynamic';
+
 export default function ChatTestPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
