@@ -1,0 +1,230 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Piaoshu Agent - 飘叔Agent 数据库设计
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 用户模型
+model User {
+  id              String   @id @default(cuid())
+  email           String?  @unique
+  name            String?
+  avatar          String?
+  openid          String?  @unique // 微信OpenID
+  level           Int      @default(1) // 活跃度等级
+  lastActiveAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // 关联
+  conversations   Conversation[]
+  behaviors       UserBehavior[]
+  interests       UserInterest[]
+  recommendations Recommendation[]
+
+  @@index([level, lastActiveAt])
+  @@index([openid])
+}
+
+// 文章模型（81篇文章）
+model Article {
+  id              String   @id @default(cuid())
+  title           String
+  content         String
+  summary         String?  // AI生成的摘要
+  coverImage      String?
+  author          String?
+  tags            String   // 逗号分隔的标签
+  category        String?  // 分类
+  difficulty      Int      @default(1) // 阅读难度 1-5
+  viewCount       Int      @default(0)
+  likeCount       Int      @default(0)
+  shareCount      Int      @default(0)
+  avgReadDuration Int      @default(0) // 平均阅读时长（秒）
+  publishedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // 关联
+  categories      ArticleCategory[]
+  behaviors       UserBehavior[]
+  recommendations Recommendation[]
+  entities        KnowledgeEntity[]
+
+  @@index([category, difficulty])
+  @@index([tags])
+  @@index([viewCount, likeCount])
+}
+
+// 文章分类关联
+model ArticleCategory {
+  id         String   @id @default(cuid())
+  articleId  String
+  categoryId String
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([articleId, categoryId])
+  @@index([categoryId])
+}
+
+// 对话模型
+model Conversation {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String?
+  context     String?  // 对话上下文摘要
+  messageCount Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Message[]
+
+  @@index([userId, updatedAt])
+  @@index([createdAt])
+}
+
+// 消息模型
+model Message {
+  id             String        @id @default(cuid())
+  conversationId String
+  role           String        // user, assistant, system
+  content        String
+  thinking       String?       // Agent的思考过程
+  relatedArticles String?      // 逗号分隔的相关文章ID
+  feedback       Int?          // 用户反馈: 1(点赞) / -1(踩)
+  createdAt      DateTime      @default(now())
+
+  // 关联
+  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+// 用户行为追踪
+model UserBehavior {
+  id              String   @id @default(cuid())
+  userId          String
+  articleId       String
+  interactionType String   // view, like, share, bookmark, click
+  duration        Int?     // 阅读时长（秒）
+  scrollDepth     Int?     // 滚动深度（百分比）
+  metadata        String?  // JSON格式的额外数据
+  createdAt       DateTime @default(now())
+
+  // 关联
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article         Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([userId, articleId])
+  @@index([userId, interactionType, createdAt])
+  @@index([articleId, interactionType])
+}
+
+// 用户兴趣偏好
+model UserInterest {
+  id          String   @id @default(cuid())
+  userId      String
+  category    String   // 兴趣类别（文章分类或标签）
+  score       Float    @default(0) // 兴趣分数
+  lastUpdated DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  // 关联
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@index([userId, score(sort: Desc)])
+  @@index([category])
+}
+
+// 推荐记录
+model Recommendation {
+  id          String   @id @default(cuid())
+  userId      String
+  articleId   String
+  score       Float    // 推荐分数
+  reason      String?  // 推荐理由
+  position    Int      // 推荐位置
+  clicked     Boolean  @default(false)
+  readDuration Int?    // 实际阅读时长
+  createdAt   DateTime @default(now())
+
+  // 关联
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article     Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, clicked])
+  @@index([score(sort: Desc)])
+}
+
+// 知识实体（替代Neo4j的简化实现）
+model KnowledgeEntity {
+  id          String          @id @default(cuid())
+  name        String
+  type        String          // person, concept, event, location
+  description String?
+  articleId   String?
+  article     Article?        @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  createdAt   DateTime        @default(now())
+
+  // 关联
+  relations   EntityRelation[] @relation("EntityFrom")
+  relationsTo EntityRelation[] @relation("EntityTo")
+
+  @@index([type])
+  @@index([name])
+}
+
+// 实体关系
+model EntityRelation {
+  id          String   @id @default(cuid())
+  fromId      String
+  toId        String
+  relation    String   // related_to, belongs_to, opposes, mentions
+  confidence  Float    @default(1.0)
+  createdAt   DateTime @default(now())
+
+  // 关联
+  fromEntity  KnowledgeEntity @relation("EntityFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  toEntity    KnowledgeEntity @relation("EntityTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([fromId, toId, relation])
+  @@index([fromId])
+  @@index([toId])
+  @@index([relation])
+}
+
+// 系统配置
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}
+
+// 数据统计缓存
+model StatsCache {
+  id          String   @id @default(cuid())
+  metric      String   // daily_active_users, avg_read_time, etc.
+  date        String   // YYYY-MM-DD
+  value       Float
+  metadata    String?  // JSON格式的额外数据
+  updatedAt   DateTime @updatedAt
+
+  @@unique([metric, date])
+  @@index([metric, date(sort: Desc)])
+}
