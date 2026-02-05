@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArticleCard } from './ArticleCard';
+// import { ArticleCard } from './ArticleCard';  // 临时注释掉
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -150,14 +150,15 @@ export function ArticleList({ onArticleClick }: ArticleListProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredArticles.map((article, index) => (
-            <ArticleCard
-              key={article.id}
-              article={article}
-              index={index}
-              onLike={handleLike}
-              onShare={handleShare}
-              onClick={onArticleClick}
-            />
+            <div key={article.id} className="p-4 border rounded-lg">
+              <h3 className="font-semibold">{article.title}</h3>
+              <p className="text-sm text-muted-foreground">{article.summary}</p>
+              <div className="mt-2 flex gap-2">
+                <Button size="sm" onClick={() => handleLike(article.id)}>Like</Button>
+                <Button size="sm" onClick={() => handleShare(article.id)}>Share</Button>
+                <Button size="sm" onClick={() => onArticleClick(article.id)}>Read</Button>
+              </div>
+            </div>
           ))}
         </div>
       )}

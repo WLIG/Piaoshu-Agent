@@ -7,8 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Send, Bot, User, Sparkles, Plus, Mic, Image as ImageIcon, Upload, FileText, ArrowLeft, X, Settings, Brain, Palette, Eye, Code, Briefcase } from 'lucide-react';
 import { VoiceInput } from '@/components/VoiceInput';
-import document from 'next/document';
-import document from 'next/document';
 
 interface Message {
   id: string;
